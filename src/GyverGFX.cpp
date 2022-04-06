@@ -21,23 +21,23 @@ void GyverGFX::line(int x0, int y0, int x1, int y1, uint8_t fill) {
     if (x0 == x1) fastLineV(x0, y0, y1, fill);
     else if (y0 == y1) fastLineH(y0, x0, x1, fill);
     else {
-        int sx, sy, e2, err;
+        int sx = (x0 < x1) ? 1 : -1;
+        int sy = (y0 < y1) ? 1 : -1;
         int dx = abs(x1 - x0);
         int dy = abs(y1 - y0);
-        if (x0 < x1) sx = 1; else sx = -1;
-        if (y0 < y1) sy = 1; else sy = -1;
-        err = dx - dy;
+        int err = dx - dy;
+        int e2 = 0;
         for (;;) {
             dot(x0, y0, fill);
             if (x0 == x1 && y0 == y1) return;
             e2 = err << 1;
             if (e2 > -dy) {
-                err = err - dy;
-                x0 = x0 + sx;
+                err -= dy;
+                x0 += sx;
             }
             if (e2 < dx) {
-                err = err + dx;
-                y0 = y0 + sy;
+                err += dx;
+                y0 += sy;
             }
         }
     }
@@ -205,7 +205,7 @@ size_t GyverGFX::write(uint8_t data) {
         uint8_t thisData = data;
         // data = 0 - флаг на пропуск
         if (data > 191) data = 0;
-        else if (_lastChar == 209 && data == 145) data = 192; // ё кастомная
+        else if (_lastChar == 209 && data == 145) data = 192;   // ё кастомная
         else if (_lastChar == 208 && data == 129) data = 149;	// Е вместо Ё
         else if (_lastChar == 226 && data == 128) data = 0;		// тире вместо длинного тире (начало)
         else if (_lastChar == 128 && data == 148) data = 45;	// тире вместо длинного тире
@@ -218,11 +218,11 @@ size_t GyverGFX::write(uint8_t data) {
     if (newX < 0 || _x > _maxX) {	// пропускаем вывод "за экраном"
         _x = newX;
     } else {
-        for (uint8_t col = 0; col < 6; col++) {		// 6 стобиков буквы
+        for (uint8_t col = 0; col < 6; col++) {		    // 6 стобиков буквы
             uint8_t bits = getFont(data, col);			// получаем байт
             byte inv = 0;
             if (_invert) bits = ~bits;
-            if (_scaleX == 1) {									    // если масштаб 1
+            if (_scaleX == 1) {									// если масштаб 1
                 if (_x >= 0 && _x < _maxX) {					// внутри дисплея
                     for (int y = 0; y < 8; y++) {
                         bool bit = bitRead(bits, y);
@@ -253,7 +253,7 @@ uint8_t GyverGFX::getFont(uint8_t font, uint8_t row) {
     font = font - '0' + 16;   // перевод код символа из таблицы ASCII
     if (font <= 95) {
         return pgm_read_byte(&(charMap[font][row]));    // для английских букв и символов
-    } else if (font >= 96 && font <= 111) {         // и пизд*ц для русских
+    } else if (font >= 96 && font <= 111) {             // для русских
         return pgm_read_byte(&(charMap[font + 47][row]));
     } else if (font <= 159) {
         return pgm_read_byte(&(charMap[font - 17][row]));
