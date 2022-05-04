@@ -1,3 +1,5 @@
+This is an automatic translation, may be incorrect in some places. See sources and examples!
+
 # GyverGFX
 Lightweight 2D Graphics Library for Displays and Matrices
 - Points
