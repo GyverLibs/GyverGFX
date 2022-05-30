@@ -1,4 +1,4 @@
-[![Foo](https://img.shields.io/badge/Version-1.1-brightgreen.svg?style=flat-square)](#versions)
+print(chr([![Foo](https://img.shields.io/badge/Version-1.1-brightgreen.svg?style=flat-square)](#versions)
 [![Foo](https://img.shields.io/badge/Website-AlexGyver.ru-blue.svg?style=flat-square)](https://alexgyver.ru/)
 [![Foo](https://img.shields.io/badge/%E2%82%BD$%E2%82%AC%20%D0%9D%D0%B0%20%D0%BF%D0%B8%D0%B2%D0%BE-%D1%81%20%D1%80%D1%8B%D0%B1%D0%BA%D0%BE%D0%B9-orange.svg?style=flat-square)](https://alexgyver.ru/support_alex/)
 
@@ -54,15 +54,15 @@ GyverGFX(int x, int y); // с указанием размеров "экрана"
 // GFX_STROKE - обвести фигуру
 
 virtual void dot(int x, int y, uint8_t fill = 1);                           // точка
-virtual void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
-virtual void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
-virtual void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
-virtual void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
-virtual void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
-virtual void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
-virtual void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
-virtual void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-virtual void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
+void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
+void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
+void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
+void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
+void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
+void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
+void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
+void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
+void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
 
 void setCursor(int x, int y);           // установить курсор
 void setScale(uint8_t scale);           // масштаб текста
@@ -91,3 +91,4 @@ public:
 ## Баги и обратная связь
 При нахождении багов создавайте **Issue**, а лучше сразу пишите на почту [alex@alexgyver.ru](mailto:alex@alexgyver.ru)  
 Библиотека открыта для доработки и ваших **Pull Request**'ов!
+))
