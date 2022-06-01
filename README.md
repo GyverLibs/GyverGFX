@@ -1,4 +1,4 @@
-print(chr([![Foo](https://img.shields.io/badge/Version-1.1-brightgreen.svg?style=flat-square)](#versions)
+[![Foo](https://img.shields.io/badge/Version-1.3-brightgreen.svg?style=flat-square)](#versions)
 [![Foo](https://img.shields.io/badge/Website-AlexGyver.ru-blue.svg?style=flat-square)](https://alexgyver.ru/)
 [![Foo](https://img.shields.io/badge/%E2%82%BD$%E2%82%AC%20%D0%9D%D0%B0%20%D0%BF%D0%B8%D0%B2%D0%BE-%D1%81%20%D1%80%D1%8B%D0%B1%D0%BA%D0%BE%D0%B9-orange.svg?style=flat-square)](https://alexgyver.ru/support_alex/)
 
@@ -42,6 +42,7 @@ print(chr([![Foo](https://img.shields.io/badge/Version-1.1-brightgreen.svg?style
 <a id="init"></a>
 ## Инициализация
 ```cpp
+GyverGFX();
 GyverGFX(int x, int y); // с указанием размеров "экрана"
 ```
 
@@ -53,7 +54,10 @@ GyverGFX(int x, int y); // с указанием размеров "экрана"
 // GFX_FILL - залить фигуру
 // GFX_STROKE - обвести фигуру
 
-virtual void dot(int x, int y, uint8_t fill = 1);                           // точка
+void size(int x, int y);                                            // установить размер
+virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
+void fill(uint8_t fill = 1);                                        // залить
+void clear();                                                       // очистить
 void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
 void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
 void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
@@ -86,9 +90,10 @@ public:
 ## Версии
 - v1.0
 - v1.1 - оптимизация памяти
+- v1.2 - небольшая оптимизация
+- v1.3 - добавил фичи
 
 <a id="feedback"></a>
 ## Баги и обратная связь
 При нахождении багов создавайте **Issue**, а лучше сразу пишите на почту [alex@alexgyver.ru](mailto:alex@alexgyver.ru)  
 Библиотека открыта для доработки и ваших **Pull Request**'ов!
-))

@@ -15,54 +15,61 @@
     AlexGyver, alex@alexgyver.ru
     https://alexgyver.ru/
     MIT License
-
+    
     Версии:
     v1.0 - релиз
     v1.1 - оптимизация памяти
     v1.2 - небольшая оптимизация
+    v1.3 - добавил фичи
 */
 
 #ifndef GyverGFX_h
-#define GyverGFX_h
-#include <Arduino.h>
-#include <Print.h>
-#include "charMap.h"
-
-#define GFX_CLEAR 0
-#define GFX_FILL 1
-#define GFX_STROKE 2
-#define GFX_ADD 0
-#define GFX_REPLACE 1
-
-#define GFX_SWAP(x,y) if (x > y) x = x ^ y ^ (y = x);
-
-class GyverGFX : public Print {
-public:
-    GyverGFX(int x, int y);
-    virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
-    void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
-    void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
-    void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
-    void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
-    void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
-    void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
-    void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
-    void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
-
-    void setCursor(int x, int y);           // установить курсор
-    void setScale(uint8_t scale);           // масштаб текста
-    void invertText(bool inv);              // инвертировать текст
-    void autoPrintln(bool mode);            // автоматический перенос строки
-    void textDisplayMode(bool mode);        // режим вывода текста GFX_ADD/GFX_REPLACE
-    size_t write(uint8_t data);
+    #define GyverGFX_h
+    #include <Arduino.h>
+    #include <Print.h>
+    #include "charMap.h"
     
-private:
-    uint8_t getFont(uint8_t font, uint8_t row);
-    int _x = 0, _y = 0;
-    uint8_t _scaleX = 1, _scaleY = 8;
-    bool _invert = 0, _println = 0, _mode = 1;
-    uint8_t _lastChar;
-    int _maxX = 5, _maxY = 5;
-};
+    #define GFX_CLEAR 0
+    #define GFX_FILL 1
+    #define GFX_STROKE 2
+    #define GFX_ADD 0
+    #define GFX_REPLACE 1
+    
+    #define GFX_SWAP(x,y) if (x > y) x = x ^ y ^ (y = x);
+    
+    class GyverGFX : public Print {
+        public:
+        GyverGFX();
+        GyverGFX(int x, int y);
+        void size(int x, int y);
+        virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
+        void fill(uint8_t fill = 1);                                        // залить
+        void clear();                                                       // очистить
+        void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
+        void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
+        void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
+        void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
+        void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
+        void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
+        void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
+        void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
+        void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
+        
+        void setCursor(int x, int y);           // установить курсор
+        void setScale(uint8_t scale);           // масштаб текста
+        void invertText(bool inv);              // инвертировать текст
+        void autoPrintln(bool mode);            // автоматический перенос строки
+        void textDisplayMode(bool mode);        // режим вывода текста GFX_ADD/GFX_REPLACE
+        size_t write(uint8_t data);
+        
+        int W();
+        int H();
+        protected:
+        uint8_t getFont(uint8_t font, uint8_t row);
+        int _x = 0, _y = 0;
+        uint8_t _scaleX = 1, _scaleY = 8;
+        bool _invert = 0, _println = 0, _mode = 1;
+        uint8_t _lastChar;
+        int _w, _h;
+    };
 #endif

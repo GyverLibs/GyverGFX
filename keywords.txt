@@ -11,6 +11,9 @@ GyverGFX	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+size	KEYWORD2
+fill	KEYWORD2
+clear	KEYWORD2
 dot	KEYWORD2
 fastLineH	KEYWORD2
 fastLineV	KEYWORD2

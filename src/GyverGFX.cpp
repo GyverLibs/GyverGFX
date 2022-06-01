@@ -2,9 +2,35 @@
 
 void GyverGFX::dot(int x, int y, uint8_t fill) {}
 
+GyverGFX::GyverGFX() {
+    GyverGFX::size(0, 0);
+}
+
 GyverGFX::GyverGFX(int x, int y) {
-    _maxX = x;
-    _maxY = y;
+    GyverGFX::size(x, y);
+}
+
+void GyverGFX::size(int x, int y) {
+    _w = x;
+    _h = y;
+}
+
+int GyverGFX::W() {
+    return _w;
+}
+
+int GyverGFX::H() {
+    return _h;
+}
+
+void GyverGFX::fill(uint8_t fill) {
+    for (uint16_t i = 0; i < _w; i++)
+    for (uint16_t j = 0; j < _h; j++)
+    GyverGFX::dot(i, j, fill);
+}
+
+void GyverGFX::clear() {
+    GyverGFX::fill(0);
 }
 
 void GyverGFX::fastLineH(int y, int x0, int x1, uint8_t fill) {
@@ -49,7 +75,7 @@ void GyverGFX::rect(int x0, int y0, int x1, int y1, uint8_t fill) {
         fastLineH(y1, x0 + 1, x1 - 1);
         fastLineV(x0, y0, y1);
         fastLineV(x1, y0, y1);
-    } else {
+        } else {
         GFX_SWAP(y0, y1);
         for (int y = y0; y <= y1; y++) fastLineH(y, x0, x1, fill);
     }
@@ -65,7 +91,7 @@ void GyverGFX::roundRect(int x0, int y0, int x1, int y1, uint8_t fill) {
         dot(x1 - 1, y0 + 1);
         dot(x1 - 1, y1 - 1);
         dot(x0 + 1, y1 - 1);
-    } else {
+        } else {
         fastLineV(x0, y0 + 2, y1 - 2, fill);
         fastLineV(x0 + 1, y0 + 1, y1 - 1, fill);
         fastLineV(x1 - 1, y0 + 1, y1 - 1, fill);
@@ -104,7 +130,7 @@ void GyverGFX::circle(int x, int y, int radius, uint8_t fill) {
             dot(x - y1, y + x1);
             dot(x + y1, y - x1);
             dot(x - y1, y - x1);
-        } else {
+            } else {
             fastLineV(x + x1, y - y1, y + y1, fillLine);
             fastLineV(x - x1, y - y1, y + y1, fillLine);
             fastLineV(x + y1, y - x1, y + x1, fillLine);
@@ -139,7 +165,7 @@ void GyverGFX::drawBitmap(int x, int y, const uint8_t *frame, int width, int hei
     byte bytes = width >> 3;
     byte left = width & 0b111;
     if (left) bytes++;
-
+    
     for (int yy = 0; yy < height; yy++) {
         for (int xx = 0; xx < (width >> 3); xx++) {
             byte thisByte = pgm_read_word(&(frame[xx + yy * bytes])) ^ invert;
@@ -191,15 +217,15 @@ size_t GyverGFX::write(uint8_t data) {
         newPos = true;
         data = 0;
     }
-    if (_println && (_x + 6 * _scaleX) >= _maxX) {
+    if (_println && (_x + 6 * _scaleX) >= _w) {
         _x = 0;  // строка переполненена, перевод и возврат
         _y += _scaleY;
         newPos = true;
     }
     if (newPos) setCursor(_x, _y);									  // переставляем курсор
-    //if (_y + _scaleY >= _maxY) data = 0;					  // дисплей переполнен
+    //if (_y + _scaleY >= _h) data = 0;					  // дисплей переполнен
     if (_println && data == ' ' && _x == 0) data = 0; // первый пробел
-
+    
     // фикс русских букв и некоторых символов
     if (data > 127) {
         uint8_t thisData = data;
@@ -213,29 +239,29 @@ size_t GyverGFX::write(uint8_t data) {
     }
     if (data == 0) return 1;
     // если тут не вылетели - печатаем символ
-
+    
     int newX = _x + _scaleX * 6;
-    if (newX < 0 || _x > _maxX) {	// пропускаем вывод "за экраном"
+    if (newX < 0 || _x > _w) {	// пропускаем вывод "за экраном"
         _x = newX;
-    } else {
+        } else {
         for (uint8_t col = 0; col < 6; col++) {		    // 6 стобиков буквы
             uint8_t bits = getFont(data, col);			// получаем байт
             byte inv = 0;
             if (_invert) bits = ~bits;
             if (_scaleX == 1) {									// если масштаб 1
-                if (_x >= 0 && _x < _maxX) {					// внутри дисплея
+                if (_x >= 0 && _x < _w) {					// внутри дисплея
                     for (int y = 0; y < 8; y++) {
                         bool bit = bitRead(bits, y);
                         if (bit || _mode) dot(_x, _y + y, bit);
                     }
                 }
                 _x++;
-            } else {											// масштаб 2, 3 или 4 - растягиваем шрифт
+                } else {											// масштаб 2, 3 или 4 - растягиваем шрифт
                 long newData = 0;								// буфер
                 for (uint8_t i = 0, count = 0; i < 8; i++)
                 for (uint8_t j = 0; j < _scaleX; j++, count++)
                 bitWrite(newData, count, bitRead(bits, i));		// пакуем растянутый шрифт
-
+                
                 for (uint8_t i = 0; i < _scaleX; i++)
                 for (uint8_t j = 0; j < _scaleY; j++) {
                     bool bit = bitRead(newData, j);
@@ -253,11 +279,11 @@ uint8_t GyverGFX::getFont(uint8_t font, uint8_t row) {
     font = font - '0' + 16;   // перевод код символа из таблицы ASCII
     if (font <= 95) {
         return pgm_read_byte(&(charMap[font][row]));    // для английских букв и символов
-    } else if (font >= 96 && font <= 111) {             // для русских
+        } else if (font >= 96 && font <= 111) {             // для русских
         return pgm_read_byte(&(charMap[font + 47][row]));
-    } else if (font <= 159) {
+        } else if (font <= 159) {
         return pgm_read_byte(&(charMap[font - 17][row]));
-    } else {
+        } else {
         return pgm_read_byte(&(charMap[font - 1][row]));  // для кастомных (ё)
     }
 }
