@@ -1,4 +1,4 @@
-[![Foo](https://img.shields.io/badge/Version-1.3-brightgreen.svg?style=flat-square)](#versions)
+[![Foo](https://img.shields.io/badge/Version-1.4-brightgreen.svg?style=flat-square)](#versions)
 [![Foo](https://img.shields.io/badge/Website-AlexGyver.ru-blue.svg?style=flat-square)](https://alexgyver.ru/)
 [![Foo](https://img.shields.io/badge/%E2%82%BD$%E2%82%AC%20%D0%9D%D0%B0%20%D0%BF%D0%B8%D0%B2%D0%BE-%D1%81%20%D1%80%D1%8B%D0%B1%D0%BA%D0%BE%D0%B9-orange.svg?style=flat-square)](https://alexgyver.ru/support_alex/)
 
@@ -92,6 +92,7 @@ public:
 - v1.1 - оптимизация памяти
 - v1.2 - небольшая оптимизация
 - v1.3 - добавил фичи
+- v1.4 - мелкие фиксы
 
 <a id="feedback"></a>
 ## Баги и обратная связь
