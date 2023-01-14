@@ -71,7 +71,7 @@ void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прям�
 void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
 void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
 void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
-void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
+void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит
 void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
 
 void setCursor(int x, int y);           // установить курсор
@@ -79,6 +79,9 @@ void setScale(uint8_t scale);           // масштаб текста
 void invertText(bool inv);              // инвертировать текст
 void autoPrintln(bool mode);            // автоматический перенос строки
 void textDisplayMode(bool mode);        // режим вывода текста GFX_ADD/GFX_REPLACE
+
+// дефайны настроек (перед подключением библиотеки)
+#define GFX_NO_PRINT        // отключить модуль вывода текста (экономия памяти)
 ```
 
 <a id="example"></a>
@@ -99,6 +102,7 @@ public:
 - v1.2 - небольшая оптимизация
 - v1.3 - добавил фичи
 - v1.4 - мелкие фиксы
+- v1.5 - добавлено отключение модуля вывода текста GFX_NO_PRINT
 
 <a id="feedback"></a>
 ## Баги и обратная связь

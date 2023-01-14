@@ -22,47 +22,333 @@
     v1.2 - небольшая оптимизация
     v1.3 - добавил фичи
     v1.4 - мелкие фиксы
+    v1.5 - добавлено отключение модуля вывода текста GFX_NO_PRINT
 */
 
 #ifndef GyverGFX_h
 #define GyverGFX_h
+
 #include <Arduino.h>
+
+#ifndef GFX_NO_PRINT
 #include <Print.h>
 #include "charMap.h"
+#endif
 
 #define GFX_CLEAR 0
 #define GFX_FILL 1
 #define GFX_STROKE 2
+
 #define GFX_ADD 0
 #define GFX_REPLACE 1
 
+#ifdef GFX_NO_PRINT
+class GyverGFX {
+#else
 class GyverGFX : public Print {
+#endif
 public:
-    GyverGFX();
-    GyverGFX(int x, int y);
-    void size(int x, int y);
-    virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
-    void fill(uint8_t fill = 1);                                        // залить
-    void clear();                                                       // очистить
-    void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
-    void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
-    void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
-    void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
-    void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
-    void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
-    void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
-    void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит. fill - GFX_CLEAR/GFX_FILL/GFX_STROKE
-    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
+    GyverGFX() {
+        size(0, 0);
+    }
+    GyverGFX(int x, int y) {
+        size(x, y);
+    }
     
-    void setCursor(int x, int y);           // установить курсор
-    void setScale(uint8_t scale);           // масштаб текста
-    void invertText(bool inv);              // инвертировать текст
-    void autoPrintln(bool mode);            // автоматический перенос строки
-    void textDisplayMode(bool mode);        // режим вывода текста GFX_ADD/GFX_REPLACE
-    size_t write(uint8_t data);
+    // установить размер
+    void size(int x, int y) {
+        _w = x;
+        _h = y;
+    }
     
-    int W();
-    int H();
+    // точка
+    virtual void dot(int x, int y, uint8_t fill = GFX_FILL) {
+    }
+    
+    // залить
+    virtual void fill(uint8_t fill = GFX_FILL) {
+        for (int i = 0; i < _w; i++)
+        for (int j = 0; j < _h; j++)
+        dotSecure(i, j, fill);
+    }
+
+    // очистить
+    virtual void clear() {
+        fill(0);
+    }
+    
+    // вертикальная линия
+    void fastLineH(int y, int x0, int x1, uint8_t fill = GFX_FILL) {
+        swap(x0, x1);
+        for (int x = x0; x <= x1; x++) dotSecure(x, y, fill);
+    }
+
+    // вертикальная линия
+    void fastLineV(int x, int y0, int y1, uint8_t fill = GFX_FILL) {
+        swap(y0, y1);
+        for (int y = y0; y <= y1; y++) dotSecure(x, y, fill);
+    }
+    
+    // линия
+    void line(int x0, int y0, int x1, int y1, uint8_t fill = GFX_FILL) {
+        if (x0 == x1) fastLineV(x0, y0, y1, fill);
+        else if (y0 == y1) fastLineH(y0, x0, x1, fill);
+        else {
+            int sx = (x0 < x1) ? 1 : -1;
+            int sy = (y0 < y1) ? 1 : -1;
+            int dx = abs(x1 - x0);
+            int dy = abs(y1 - y0);
+            int err = dx - dy;
+            int e2 = 0;
+            for (;;) {
+                dotSecure(x0, y0, fill);
+                if (x0 == x1 && y0 == y1) return;
+                e2 = err << 1;
+                if (e2 > -dy) {
+                    err -= dy;
+                    x0 += sx;
+                }
+                if (e2 < dx) {
+                    err += dx;
+                    y0 += sy;
+                }
+            }
+        }
+    }
+    
+    // прямоугольник
+    void rect(int x0, int y0, int x1, int y1, uint8_t fill = GFX_FILL) {
+        swap(y0, y1);
+        swap(x0, x1);
+        if (fill == GFX_STROKE) {
+            fastLineH(y0, x0 + 1, x1 - 1);
+            fastLineH(y1, x0 + 1, x1 - 1);
+            fastLineV(x0, y0, y1);
+            fastLineV(x1, y0, y1);
+        } else for (int y = y0; y <= y1; y++) fastLineH(y, x0, x1, fill);
+        
+    }
+    
+    // скруглённый прямоугольник
+    void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = GFX_FILL) {
+        swap(y0, y1);
+        swap(x0, x1);
+        if (fill == GFX_STROKE) {
+            fastLineV(x0, y0 + 2, y1 - 2);
+            fastLineV(x1, y0 + 2, y1 - 2);
+            fastLineH(y0, x0 + 2, x1 - 2);
+            fastLineH(y1, x0 + 2, x1 - 2);
+            dotSecure(x0 + 1, y0 + 1);
+            dotSecure(x1 - 1, y0 + 1);
+            dotSecure(x1 - 1, y1 - 1);
+            dotSecure(x0 + 1, y1 - 1);
+        } else {
+            fastLineV(x0, y0 + 2, y1 - 2, fill);
+            fastLineV(x0 + 1, y0 + 1, y1 - 1, fill);
+            fastLineV(x1 - 1, y0 + 1, y1 - 1, fill);
+            fastLineV(x1, y0 + 2, y1 - 2, fill);
+            rect(x0 + 2, y0, x1 - 2, y1, fill);
+        }
+    }
+    
+    // окружность
+    void circle(int x, int y, int radius, uint8_t fill = GFX_FILL) {
+        int f = 1 - radius;
+        int ddF_x = 1;
+        int ddF_y = -2 * radius;
+        int x1 = 0;
+        int y1 = radius;
+        uint8_t fillLine = (fill == GFX_CLEAR) ? 0 : 1;
+        dotSecure(x, y + radius, fillLine);
+        dotSecure(x, y - radius, fillLine);
+        dotSecure(x + radius, y, fillLine);
+        dotSecure(x - radius, y, fillLine);
+        if (fill != GFX_STROKE) fastLineV(x, y - radius, y + radius - 1, fillLine);
+        while (x1 < y1) {
+            if (f >= 0) {
+                y1--;
+                ddF_y += 2;
+                f += ddF_y;
+            }
+            x1++;
+            ddF_x += 2;
+            f += ddF_x;
+            if (fill == GFX_STROKE) {
+                dotSecure(x + x1, y + y1);
+                dotSecure(x - x1, y + y1);
+                dotSecure(x + x1, y - y1);
+                dotSecure(x - x1, y - y1);
+                dotSecure(x + y1, y + x1);
+                dotSecure(x - y1, y + x1);
+                dotSecure(x + y1, y - x1);
+                dotSecure(x - y1, y - x1);
+            } else {
+                fastLineV(x + x1, y - y1, y + y1, fillLine);
+                fastLineV(x - x1, y - y1, y + y1, fillLine);
+                fastLineV(x + y1, y - x1, y + x1, fillLine);
+                fastLineV(x - y1, y - x1, y + x1, fillLine);
+            }
+        }
+    }
+
+    // кривая Безье
+    void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = GFX_FILL) {
+        int a[size * 2];
+        for (int i = 0; i < (1 << dense); i++) {
+            for (int j = 0; j < size * 2; j++) a[j] = arr[j] << 3;
+            for (int j = (size - 1) * 2 - 1; j > 0; j -= 2)
+            for (int k = 0; k <= j; k++)
+            a[k] = a[k] + (((a[k + 2] - a[k]) * i) >> dense);
+            dotSecure(a[0] >> 3, a[1] >> 3, fill);
+        }
+    }
+
+    // кривая Безье 16 бит
+    void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = GFX_FILL) {
+        int a[size * 2];
+        for (int i = 0; i < (1 << dense); i++) {
+            for (int j = 0; j < size * 2; j++) a[j] = arr[j];
+            for (int j = (size - 1) * 2 - 1; j > 0; j -= 2)
+            for (int k = 0; k <= j; k++)
+            a[k] = a[k] + (((a[k + 2] - a[k]) * i) >> dense);
+            dotSecure(a[0], a[1], fill);
+        }
+    }
+    
+    // битмап
+    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert, uint8_t mode = GFX_FILL) {
+        byte bytes = width >> 3;
+        byte left = width & 0b111;
+        if (left) bytes++;
+        
+        for (int yy = 0; yy < height; yy++) {
+            for (int xx = 0; xx < (width >> 3); xx++) {
+                byte thisByte = pgm_read_word(&(frame[xx + yy * bytes])) ^ invert;
+                for (byte k = 0; k < 8; k++) {
+                    byte val = thisByte & 0b10000000;
+                    if (val || mode) dotSecure((xx << 3) + k + x, yy + y, val);
+                    thisByte <<= 1;
+                }
+            }
+            if (left) {
+                byte thisByte = pgm_read_byte(&(frame[(width >> 3) + yy * bytes])) ^ invert;
+                for (byte k = 0; k < left; k++) {
+                    byte val = thisByte & 0b10000000;
+                    if (val || mode) dotSecure(((width >> 3) << 3) + k + x, yy + y, val);
+                    thisByte <<= 1;
+                }
+            }
+        }
+    }
+    
+    // установить курсор
+    void setCursor(int x, int y) {
+        _x = x;
+        _y = y;
+    }
+
+    // масштаб текста
+    void setScale(uint8_t scale) {
+        scale = constrain(scale, 1, 4);
+        _scaleX = scale;
+        _scaleY = scale * 8;
+    }
+
+    // инвертировать текст
+    void invertText(bool inv) {
+        _invert = inv;
+    }
+
+    // автоматический перенос строки
+    void autoPrintln(bool mode) {
+        _println = mode;
+    }
+
+    // режим вывода текста GFX_ADD/GFX_REPLACE
+    void textDisplayMode(bool mode) {
+        _mode = mode;
+    }
+    
+    
+    size_t write(uint8_t data) {
+    #ifndef GFX_NO_PRINT
+        bool newPos = false;
+        if (data == '\r') return 1;
+        
+        if (data == '\n') {     // получен перевод строки
+            _y += _scaleY;
+            _x = 0;
+            newPos = true;
+            data = 0;
+        }
+        if (_println && (_x + 6 * _scaleX) >= _w) {
+            _x = 0;             // строка переполненена, перевод и возврат
+            _y += _scaleY;
+            newPos = true;
+        }
+        if (newPos) setCursor(_x, _y);                      // переставляем курсор
+        //if (_y + _scaleY >= _h) data = 0;                 // дисплей переполнен
+        if (_println && data == ' ' && _x == 0) data = 0;   // первый пробел
+        
+        // фикс русских букв и некоторых символов
+        if (data > 127) {
+            uint8_t thisData = data;
+            // data = 0 - флаг на пропуск
+            if (data > 191) data = 0;
+            else if (_lastChar == 209 && data == 145) data = 192;   // ё кастомная
+            else if (_lastChar == 208 && data == 129) data = 149;   // Е вместо Ё
+            else if (_lastChar == 226 && data == 128) data = 0;     // тире вместо длинного тире (начало)
+            else if (_lastChar == 128 && data == 148) data = 45;    // тире вместо длинного тире
+            _lastChar = thisData;
+        }
+        if (data == 0) return 1;
+        // если тут не вылетели - печатаем символ
+        
+        int newX = _x + _scaleX * 6;
+        if (newX < 0 || _x > _w) {                          // пропускаем вывод "за экраном"
+            _x = newX;
+        } else {
+            for (uint8_t col = 0; col < 6; col++) {         // 6 столбиков буквы
+                uint8_t bits = getFont(data, col);          // получаем байт
+                if (_invert) bits = ~bits;
+                if (_scaleX == 1) {                         // если масштаб 1
+                    if (_x >= 0 && _x < _w) {               // внутри дисплея
+                        for (int y = 0; y < 8; y++) {
+                            bool bit = bitRead(bits, y);
+                            if (bit || _mode) dotSecure(_x, _y + y, bit);
+                        }
+                    }
+                    _x++;
+                } else {                                            // масштаб 2, 3 или 4 - растягиваем шрифт
+                    long newData = 0;                               // буфер
+                    for (uint8_t i = 0, count = 0; i < 8; i++)
+                    for (uint8_t j = 0; j < _scaleX; j++, count++)
+                    bitWrite(newData, count, bitRead(bits, i));     // пакуем растянутый шрифт
+                    
+                    for (uint8_t i = 0; i < _scaleX; i++)
+                    for (uint8_t j = 0; j < _scaleY; j++) {
+                        bool bit = bitRead(newData, j);
+                        if (bit || _mode) dotSecure(_x + i, _y + j, bit);
+                    }
+                    _x += _scaleX;
+                }
+            }
+        }
+    #endif
+        return 1;
+    }
+    
+    // получить ширину
+    int W() {
+        return _w;
+    }
+    
+    // получить высоту
+    int H() {
+        return _h;
+    }
+
+
 protected:
     void swap(int &a, int &b) {
         if (a > b) {
@@ -72,9 +358,20 @@ protected:
         }
     }
     void dotSecure(int x, int y, uint8_t fill = 1) {
-        if (x >= 0 && x < _w && y >= 0 && y < _h) dot(x, y, fill);
+        if (x < 0 || x >= _w || y < 0 || y >= _h) return;
+        dot(x, y, fill);
     }
-    uint8_t getFont(uint8_t font, uint8_t row);
+    uint8_t getFont(uint8_t font, uint8_t row) {
+    #ifndef GFX_NO_PRINT
+        if (row > 4) return 0;
+        font = font - '0' + 16;         // перевод код символа из таблицы ASCII
+        if (font <= 95) return pgm_read_byte(&(charMap[font][row]));    // для английских букв и символов
+        else if (font >= 96 && font <= 111) return pgm_read_byte(&(charMap[font + 47][row]));   // для русских
+        else if (font <= 159) return pgm_read_byte(&(charMap[font - 17][row]));
+        else return pgm_read_byte(&(charMap[font - 1][row]));           // для кастомных (ё)
+    #endif
+    }
+
     int _x = 0, _y = 0;
     uint8_t _scaleX = 1, _scaleY = 8;
     bool _invert = 0, _println = 0, _mode = 1;
