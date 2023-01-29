@@ -23,10 +23,11 @@
     v1.3 - добавил фичи
     v1.4 - мелкие фиксы
     v1.5 - добавлено отключение модуля вывода текста GFX_NO_PRINT
+    v1.5.1 - мелкие фиксы
 */
 
-#ifndef GyverGFX_h
-#define GyverGFX_h
+#ifndef _GyverGFX_h
+#define _GyverGFX_h
 
 #include <Arduino.h>
 
@@ -216,7 +217,7 @@ public:
     }
     
     // битмап
-    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert, uint8_t mode = GFX_FILL) {
+    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, uint8_t mode = GFX_FILL) {
         byte bytes = width >> 3;
         byte left = width & 0b111;
         if (left) bytes++;
