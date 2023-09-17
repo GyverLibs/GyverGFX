@@ -275,7 +275,7 @@ class GyverGFX : public Print {
     }
 
     // определить длину строки с любыми символами (в т.ч. русскими)
-    uint16_t strlen(const char *str) {
+    uint16_t strlen_fix(const char *str) {
         uint16_t i = 0, count = 0;
         while (str[i]) {
             if ((str[i] & 0xc0) != 0x80) count++;
@@ -285,7 +285,7 @@ class GyverGFX : public Print {
     }
 
     // определить длину PGM строки с любыми символами (в т.ч. русскими)
-    uint16_t strlen_P(PGM_P str) {
+    uint16_t strlen_fix_P(PGM_P str) {
         uint16_t i = 0, count = 0;
         char c;
         while (1) {

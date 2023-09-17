@@ -42,6 +42,8 @@ textDisplayMode	KEYWORD2
 write	KEYWORD2
 setTextBound	KEYWORD2
 resetTextBound	KEYWORD2
+strlen_fix	KEYWORD2
+strlen_fix_P	KEYWORD2
 
 setText	KEYWORD2
 setText_P	KEYWORD2

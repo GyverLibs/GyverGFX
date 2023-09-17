@@ -21,7 +21,7 @@ class RunningGFX {
         _str = str;
         _scale = scale;
         _p = 0;
-        _len = _gfx->strlen(_str) * 6 * scale;
+        _len = _gfx->strlen_fix(_str) * 6 * scale;
     }
 
     // установить текст String
@@ -34,7 +34,7 @@ class RunningGFX {
         _str = str;
         _scale = scale;
         _p = 1;
-        _len = _gfx->strlen_P(_str) * 6 * scale;
+        _len = _gfx->strlen_fix(_str) * 6 * scale;
     }
 
     // установить окно (x0, x1, y)
