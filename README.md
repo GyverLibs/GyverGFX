@@ -15,6 +15,7 @@
 - Кривая Безье
 - Битмап
 - Вывод текста (русский, английский) нескольких размеров
+- Бегущая строка
 
 ### Совместимость
 Совместима со всеми Arduino платформами (используются Arduino-функции)
@@ -54,6 +55,8 @@ GyverGFX(int x, int y); // с указанием размеров "экрана"
 
 <a id="usage"></a>
 ## Использование
+### GyverGFX
+
 ```cpp
 // fill:
 // GFX_CLEAR - очистить
@@ -61,38 +64,112 @@ GyverGFX(int x, int y); // с указанием размеров "экрана"
 // GFX_STROKE - обвести фигуру
 
 void size(int x, int y);                                            // установить размер
+int width();                                                        // получить ширину
+int height();                                                       // получить высоту
 virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
 void fill(uint8_t fill = 1);                                        // залить
 void clear();                                                       // очистить
-void fastLineH(int y, int x0, int x1, uint8_t fill = 1);            // вертикальная линия
-void fastLineV(int x, int y0, int y1, uint8_t fill = 1);            // горизонтальная линия
+void lineH(int y, int x0, int x1, uint8_t fill = 1);                // вертикальная линия
+void lineV(int x, int y0, int y1, uint8_t fill = 1);                // горизонтальная линия
 void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
 void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник
+void rect(int x0, int y0, int w, int h, uint8_t fill = 1);          // прямоугольник
 void roundRect(int x0, int y0, int x1, int y1, uint8_t fill = 1);   // скруглённый прямоугольник
+void roundRectWH(int x0, int y0, int w, int h, uint8_t fill = 1);   // скруглённый прямоугольник
 void circle(int x, int y, int radius, uint8_t fill = 1);            // окружность
 void bezier(uint8_t* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);   // кривая Безье
 void bezier16(int* arr, uint8_t size, uint8_t dense, uint8_t fill = 1);     // кривая Безье 16 бит
 void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, byte mode = 0);  // битмап
 
+// mode:
+// GFX_ADD - добавить к буферу пиксели текста
+// GFX_REPLACE - добавить текст вместе с очисткой пикселей вне текста (полная замена)
+void textDisplayMode(bool mode);        // режим вывода текста
+
 void setCursor(int x, int y);           // установить курсор
 void setScale(uint8_t scale);           // масштаб текста
+uint8_t getScale();                     // получить масштаб текста
 void invertText(bool inv);              // инвертировать текст
 void autoPrintln(bool mode);            // автоматический перенос строки
-void textDisplayMode(bool mode);        // режим вывода текста GFX_ADD/GFX_REPLACE
+void setTextBound(int x0, int x1);      // установить границы вывода текста по х
+void resetTextBound();                  // сбросить границы вывода текста до (0, ширина)
+uint16_t strlen(const char *str);       // определить длину строки с любыми символами (в т.ч. русскими)
+uint16_t strlen_P(const char *str);     // определить длину строки с любыми символами (в т.ч. русскими)
 
 // дефайны настроек (перед подключением библиотеки)
 #define GFX_NO_PRINT        // отключить модуль вывода текста (экономия памяти)
 ```
 
+### RunningGFX
+Асинхронная бегущая строка. Не хранит строку внутри себя, поэтому по очевидным причинам поддерживает работу с:
+- Глобально созданными `String` - строками
+- Глобально созданными `PROGMEM` - строками
+- Глобально созданными `char[]` - строками
+- Строковыми константами (они изначально являются глобальными)
+
+Строку момжно изменять во время движения: `setText()` не запускает движение заново, поэтому при обновлении String-строки можно вызвать setText для автоматического пересчёта длины.
+
+```cpp
+RunningGFX(GyverGFX* gfx);
+
+void setText(const char* str, uint8_t scale = 1);   // установить текст const char*
+void setText(String& str, uint8_t scale = 1);       // установить текст String
+void setText_P(PGM_P str, uint8_t scale = 1);       // установить текст из PROGMEM (глобальный)
+void setWindow(int16_t x0, int16_t x1, int16_t y);  // установить окно (x0, x1, y)
+void setSpeed(uint16_t pixPerSec);                  // установить скорость (пикселей в секунду)
+
+void start();                                       // запустить бегущую строку с начала
+void stop();                                        // остановить бегущую строку
+void resume();                                      // продолжить движение с момента остановки
+
+// тикер, вызывать в loop
+// Вернёт 0 в холостом, 1 при новом шаге, 2 при завершении движения
+uint8_t tick();
+```
+
 <a id="example"></a>
 ## Пример
+
 ```cpp
 // пример наследования в класс
 class MAX7219 : public GyverGFX {
 public:
-    MAX7219() : GyverGFX(width * 8, height * 8) {
+    MAX7219(int width, int height) : GyverGFX(width * 8, height * 8) {
         begin();
     }
+};
+```
+
+```cpp
+// пример RunningGFX
+// RunningGFX работает с классом, который наследует GyverGFX. Например библиотека GyverMAX7219
+
+MAX7219<4, 1, 5> mtrx;  // одна матрица (1х1), пин CS на D5
+RunningGFX run1(&mtrx);
+RunningGFX run2(&mtrx);
+const char pstr_g[] PROGMEM = "Global pgm string";
+String str_g = "123";
+
+void setup() {
+    mtrx.begin();       // запускаем
+    mtrx.setBright(5);  // яркость 0..15
+
+    run1.setText("hello");  // строковая константа
+    // run1.setText(str_g); // глобальная стринга
+    run1.setSpeed(15);
+    run1.setWindow(0, 16, 0);
+    run1.start();
+
+    run1.setText_P(pstr_g); // глобальная PGM строка
+    run2.setSpeed(10);
+    run2.setWindow(8, 16, 0);
+    run2.start();
+}
+
+void loop() {
+  run1.tick();
+  run2.tick();
+}
 ```
 
 <a id="versions"></a>
@@ -104,6 +181,7 @@ public:
 - v1.4 - мелкие фиксы
 - v1.5 - добавлено отключение модуля вывода текста GFX_NO_PRINT
 - v1.5.1 - мелкие фиксы
+- v1.6 - мелкие улучшения, добавлен движок бегущей строки
 
 <a id="feedback"></a>
 ## Баги и обратная связь
