@@ -15,16 +15,6 @@
     AlexGyver, alex@alexgyver.ru
     https://alexgyver.ru/
     MIT License
-
-    Версии:
-    v1.0 - релиз
-    v1.1 - оптимизация памяти
-    v1.2 - небольшая оптимизация
-    v1.3 - добавил фичи
-    v1.4 - мелкие фиксы
-    v1.5 - добавлено отключение модуля вывода текста GFX_NO_PRINT
-    v1.5.1 - мелкие фиксы
-    v1.6 - мелкие улучшения, добавлен движок бегущей строки
 */
 
 #ifndef _GyverGFX_h
@@ -32,18 +22,25 @@
 
 #include <Arduino.h>
 
-#ifndef GFX_NO_PRINT
-#include <Print.h>
-
-#include "charMap.h"
-#endif
-
 #define GFX_CLEAR 0
 #define GFX_FILL 1
 #define GFX_STROKE 2
 
-#define GFX_ADD 0
-#define GFX_REPLACE 1
+#define GFX_REPLACE 0
+#define GFX_ADD 1
+
+#ifndef GFX_NO_PRINT
+#include <Print.h>
+
+#include "fonts/font5x8.h"
+#include "fonts/icons8x8.h"
+struct gfx_config_t {
+    int16_t x = 0, y = 0;
+    uint8_t scale = 1;
+    bool invert = 0, println = 0, tmode = 0;
+    int16_t tx0, tx1;
+};
+#endif
 
 #ifdef GFX_NO_PRINT
 class GyverGFX {
@@ -62,7 +59,9 @@ class GyverGFX : public Print {
     void size(uint16_t x, uint16_t y) {
         _w = x;
         _h = y;
+#ifndef GFX_NO_PRINT
         resetTextBound();
+#endif
     }
 
     // получить ширину
@@ -74,11 +73,12 @@ class GyverGFX : public Print {
         return _h;
     }
 
+    // =================== INTERFACE ===================
     // точка
     virtual void dot(int x, int y, uint8_t fill = GFX_FILL) {
     }
 
-    // залить
+    // залить экран
     virtual void fill(uint8_t fill = GFX_FILL) {
         for (uint16_t i = 0; i < _w; i++) {
             for (uint16_t j = 0; j < _h; j++) {
@@ -87,13 +87,15 @@ class GyverGFX : public Print {
         }
     }
 
-    // очистить
+    // очистить экран
     virtual void clear() {
         fill(0);
     }
 
     // обновить (интерфейсная)
     virtual void update() = 0;
+
+    // =================== GFX ===================
 
     // вертикальная линия
     void lineH(int y, int x0, int x1, uint8_t fill = GFX_FILL) {
@@ -249,7 +251,7 @@ class GyverGFX : public Print {
     }
 
     // битмап
-    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, uint8_t mode = GFX_FILL) {
+    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, uint8_t mode = GFX_REPLACE) {
         uint8_t bytes = width >> 3;
         uint8_t left = width & 0b111;
         if (left) bytes++;
@@ -259,7 +261,7 @@ class GyverGFX : public Print {
                 uint8_t thisByte = pgm_read_word(&(frame[xx + yy * bytes])) ^ invert;
                 for (uint8_t k = 0; k < 8; k++) {
                     uint8_t val = thisByte & 0b10000000;
-                    if (val || mode) dotSecure((xx << 3) + k + x, yy + y, val);
+                    if (val || !mode) dotSecure((xx << 3) + k + x, yy + y, val);
                     thisByte <<= 1;
                 }
             }
@@ -267,13 +269,15 @@ class GyverGFX : public Print {
                 uint8_t thisByte = pgm_read_byte(&(frame[(width >> 3) + yy * bytes])) ^ invert;
                 for (uint8_t k = 0; k < left; k++) {
                     uint8_t val = thisByte & 0b10000000;
-                    if (val || mode) dotSecure(((width >> 3) << 3) + k + x, yy + y, val);
+                    if (val || !mode) dotSecure(((width >> 3) << 3) + k + x, yy + y, val);
                     thisByte <<= 1;
                 }
             }
         }
     }
 
+    // ==================== TEXT =====================
+#ifndef GFX_NO_PRINT
     // определить длину строки с любыми символами (в т.ч. русскими)
     uint16_t strlen_fix(const char *str) {
         uint16_t i = 0, count = 0;
@@ -299,56 +303,102 @@ class GyverGFX : public Print {
 
     // установить курсор
     void setCursor(int x, int y) {
-        _x = x;
-        _y = y;
+        cfg.x = x;
+        cfg.y = y;
     }
 
-    // масштаб текста
+    // получить курсор x
+    int getCursorX() {
+        return cfg.x;
+    }
+
+    // получить курсор y
+    int getCursorY() {
+        return cfg.y;
+    }
+
+    // установить масштаб текста (1-4)
     void setScale(uint8_t scale) {
         scale = constrain(scale, 1, 4);
-        _scaleX = scale;
-        _scaleY = scale * 8;
+        cfg.scale = scale;
     }
 
     // получить масштаб текста
     uint8_t getScale() {
-        return _scaleX;
+        return cfg.scale;
     }
 
-    // инвертировать текст
+    // установить инверсию текста
     void invertText(bool inv) {
-        _invert = inv;
+        cfg.invert = inv;
     }
 
-    // автоматический перенос строки
+    // получить инверсию текста
+    bool getInvertText() {
+        return cfg.invert;
+    }
+
+    // установить автоматический перенос текста
     void autoPrintln(bool mode) {
-        _println = mode;
+        cfg.println = mode;
     }
 
-    // режим вывода текста GFX_ADD/GFX_REPLACE
+    // получить автоматический перенос текста
+    bool getAutoPrintln() {
+        return cfg.println;
+    }
+
+    // установить режим вывода текста GFX_ADD/GFX_REPLACE
     void textDisplayMode(bool mode) {
-        _mode = mode;
+        cfg.tmode = mode;
     }
 
+    // получить режим вывода текста
+    bool getTextDisplayMode() {
+        return cfg.tmode;
+    }
+
+    // установить границы вывода текста по х
+    void setTextBound(int x0, int x1) {
+        cfg.tx0 = x0;
+        cfg.tx1 = x1;
+    }
+
+    // получить границу вывода 0
+    int getTextBoundX0() {
+        return cfg.tx0;
+    }
+
+    // получить границу вывода 1
+    int getTextBoundX1() {
+        return cfg.tx1;
+    }
+
+    // сбросить границы вывода текста до (0, ширина)
+    void resetTextBound() {
+        cfg.tx0 = 0;
+        cfg.tx1 = _w - 1;
+    }
+
+    // ================== WRITE ===================
     size_t write(uint8_t data) {
-#ifndef GFX_NO_PRINT
         bool newPos = false;
         if (data == '\r') return 1;
 
         if (data == '\n') {  // получен перевод строки
-            _y += _scaleY;
-            _x = 0;
+            cfg.y += (cfg.scale << 3);
+            cfg.x = 0;
             newPos = true;
             data = 0;
         }
-        if (_println && (_x + 6 * _scaleX) >= (int16_t)_w) {
-            _x = 0;  // строка переполненена, перевод и возврат
-            _y += _scaleY;
+        if (cfg.println && (cfg.x + 6 * cfg.scale) >= (int16_t)_w) {
+            cfg.x = 0;  // строка переполненена, перевод и возврат
+            cfg.y += (cfg.scale << 3);
             newPos = true;
         }
-        if (newPos) setCursor(_x, _y);  // переставляем курсор
-        // if (_y + _scaleY >= _h) data = 0;                 // дисплей переполнен
-        if (_println && data == ' ' && _x == 0) data = 0;  // первый пробел
+        if (newPos) setCursor(cfg.x, cfg.y);  // переставляем курсор
+        // if (cfg.y + (cfg.scale << 3) >= _h) data = 0;                 // дисплей переполнен
+        if (cfg.println && data == ' ' && cfg.x == 0) data = 0;  // первый пробел
 
         // фикс русских букв и некоторых символов
         if (data > 127) {
@@ -364,58 +414,55 @@ class GyverGFX : public Print {
         if (data == 0) return 1;
         // если тут не вылетели - печатаем символ
 
-        int newX = _x + _scaleX * 6;
-        if (newX < _tx0 || _x >= _tx1) {  // пропускаем вывод "за экраном"
-            _x = newX;
+        int newX = cfg.x + cfg.scale * 6;
+        if (newX < cfg.tx0 || cfg.x > cfg.tx1) {  // пропускаем вывод "за экраном"
+            cfg.x = newX;
         } else {
             for (uint8_t col = 0; col < 6; col++) {  // 6 столбиков буквы
                 uint8_t bits = getFont(data, col);   // получаем байт
-                if (_invert) bits = ~bits;
-                if (_scaleX == 1) {            // если масштаб 1
-                    if (_x >= 0 && _x < (int16_t)_w) {  // внутри дисплея
-                        for (uint8_t y = 0; y < 8; y++) {
-                            bool bit = bitRead(bits, y);
-                            if ((bit || _mode) && (_x >= _tx0 && _x <= _tx1)) dotSecure(_x, _y + y, bit);
-                        }
-                    }
-                    _x++;
-                } else {  // масштаб 2, 3 или 4 - растягиваем шрифт
-                    uint32_t buf = 0;
-                    for (uint8_t i = 0, count = 0; i < 8; i++) {
-                        for (uint8_t j = 0; j < _scaleX; j++, count++) {
-                            bitWrite(buf, count, bitRead(bits, i));  // пакуем растянутый шрифт
-                        }
-                    }
-
-                    for (uint8_t i = 0; i < _scaleX; i++) {
-                        for (uint8_t j = 0; j < _scaleY; j++) {
-                            bool bit = bitRead(buf, j);
-                            if ((bit || _mode) && (_x + i >= _tx0 && _x + i <= _tx1)) dotSecure(_x + i, _y + j, bit);
-                        }
-                    }
-                    _x += _scaleX;
-                }
+                drawByte(bits);
             }
         }
-#endif
         return 1;
     }
 
-    // установить границы вывода текста по х
-    void setTextBound(int x0, int x1) {
-#ifndef GFX_NO_PRINT
-        _tx0 = x0;
-        _tx1 = x1;
-#endif
+    // вывести столбик-байт в текущий курсор с учётом масштаба и режима текста, автоматически перенесёт курсор
+    void drawBytes_P(const uint8_t *bytes, int amount) {
+        for (int i = 0; i < amount; i++) drawByte(pgm_read_byte(&bytes[i]));
+    }
+    void drawBytes(uint8_t *bytes, int amount) {
+        for (int i = 0; i < amount; i++) drawByte(bytes[i]);
+    }
+    void drawByte(uint8_t bits) {
+        if (cfg.invert) bits = ~bits;
+        if (cfg.scale == 1) {                         // если масштаб 1
+            if (cfg.x >= 0 && cfg.x < (int16_t)_w) {  // внутри дисплея
+                for (uint8_t y = 0; y < 8; y++) {
+                    bool bit = bitRead(bits, y);
+                    if ((bit || !cfg.tmode) && (cfg.x >= cfg.tx0 && cfg.x <= cfg.tx1)) dotSecure(cfg.x, cfg.y + y, bit);
+                }
+            }
+            cfg.x++;
+        } else {  // масштаб 2, 3 или 4 - растягиваем шрифт
+            uint32_t buf = 0;
+            for (uint8_t i = 0, count = 0; i < 8; i++) {
+                for (uint8_t j = 0; j < cfg.scale; j++, count++) {
+                    bitWrite(buf, count, bitRead(bits, i));  // пакуем растянутый шрифт
+                }
+            }
+
+            for (uint8_t i = 0; i < cfg.scale; i++) {
+                for (uint8_t j = 0; j < (cfg.scale << 3); j++) {
+                    bool bit = bitRead(buf, j);
+                    if ((bit || !cfg.tmode) && (cfg.x + i >= cfg.tx0 && cfg.x + i <= cfg.tx1)) dotSecure(cfg.x + i, cfg.y + j, bit);
+                }
+            }
+            cfg.x += cfg.scale;
+        }
     }
 
-    // сбросить границы вывода текста до (0, ширина)
-    void resetTextBound() {
-#ifndef GFX_NO_PRINT
-        _tx0 = 0;
-        _tx1 = _w - 1;
+    gfx_config_t cfg;
 #endif
-    }
 
     // ============= DEPRECATED =============
     int W() {
@@ -443,25 +490,18 @@ class GyverGFX : public Print {
         if (x < 0 || x >= (int16_t)_w || y < 0 || y >= (int16_t)_h) return;
         dot(x, y, fill);
     }
-    uint8_t getFont(uint8_t font, uint8_t row) {
 #ifndef GFX_NO_PRINT
+    uint8_t getFont(uint8_t font, uint8_t row) {
         if (row > 4) return 0;
         font = font - '0' + 16;                                                                // перевод код символа из таблицы ASCII
         if (font <= 95) return pgm_read_byte(&(charMap[font][row]));                           // для английских букв и символов
         else if (font >= 96 && font <= 111) return pgm_read_byte(&(charMap[font + 47][row]));  // для русских
         else if (font <= 159) return pgm_read_byte(&(charMap[font - 17][row]));
         else return pgm_read_byte(&(charMap[font - 1][row]));  // для кастомных (ё)
-#endif
     }
-
-    int16_t _x = 0, _y = 0;
-    uint8_t _scaleX = 1, _scaleY = 8;
-    bool _invert = 0, _println = 0, _mode = 1;
     uint8_t _lastChar;
-    uint16_t _w, _h;
-
-#ifndef GFX_NO_PRINT
-    int16_t _tx0, _tx1;
 #endif
+
+    uint16_t _w, _h;
 };
 #endif

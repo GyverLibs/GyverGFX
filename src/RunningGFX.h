@@ -17,24 +17,37 @@ class RunningGFX {
     }
 
     // установить текст const char*
-    void setText(const char* str, uint8_t scale = 1) {
+    void setText(const char* str) {
         _str = str;
-        _scale = scale;
         _p = 0;
-        _len = _gfx->strlen_fix(_str) * 6 * scale;
+        _len = _gfx->strlen_fix(_str) * 6;
     }
 
     // установить текст String
-    void setText(String& str, uint8_t scale = 1) {
+    void setText(String& str) {
         setText(str.c_str());
     }
 
     // установить текст из PROGMEM (глобальный)
-    void setText_P(PGM_P str, uint8_t scale = 1) {
+    void setText_P(PGM_P str) {
         _str = str;
-        _scale = scale;
         _p = 1;
-        _len = _gfx->strlen_fix_P(_str) * 6 * scale;
+        _len = _gfx->strlen_fix_P(_str) * 6;
+    }
+
+    // инвертировать текст
+    void invertText(bool inv) {
+        _invert = inv;
+    }
+
+    // масштаб текста
+    void setScale(uint8_t scale) {
+        _scale = constrain(scale, 1, 4);
+    }
+
+    // режим вывода текста GFX_ADD/GFX_REPLACE
+    void textDisplayMode(bool mode) {
+        _tmode = mode;
     }
 
     // установить окно (x0, x1, y)
@@ -68,31 +81,42 @@ class RunningGFX {
     }
 
     // тикер. Вернёт 0 в холостом, 1 при новом шаге, 2 при завершении движения
-    uint8_t tick() {
+    // Можно передать false чтобы дисплей не обновлялся сам
+    uint8_t tick(bool update = true) {
         if (_tmr && (uint16_t)((uint16_t)millis() - _tmr) >= _prd) {
             resume();
-            _gfx->setScale(_scale);
-            _gfx->setTextBound(_x0, _x1);
-            _gfx->setCursor(_x0 + _pos, _y);
-            if (_p) _gfx->print((const __FlashStringHelper*)_str);
-            else _gfx->print(_str);
-            _gfx->update();
-            if (--_pos <= -_len) {
-                start();
-                return RG_FINISH;
-            }
-            return RG_MOVE;
+            return tickManual(update);
         }
         return RG_IDLE;
+    }
+
+    // сдвинуть строку на 1 пиксель. Можно передать false чтобы дисплей не обновлялся сам
+    uint8_t tickManual(bool update = true) {
+        gfx_config_t cfg = _gfx->cfg;
+        _gfx->setScale(_scale);
+        _gfx->invertText(_invert);
+        _gfx->textDisplayMode(_tmode);
+        _gfx->setTextBound(_x0, _x1);
+        _gfx->setCursor(_pos, _y);
+        if (_p) _gfx->print((const __FlashStringHelper*)_str);
+        else _gfx->print(_str);
+        _gfx->cfg = cfg;
+        if (update) _gfx->update();
+        if (--_pos <= _x0 - (int16_t)(_len * _scale)) {
+            start();
+            return RG_FINISH;
+        }
+        return RG_MOVE;
     }
 
    private:
     GyverGFX* _gfx;
     const char* _str = nullptr;
     uint16_t _tmr = 0, _prd = 50;
-    int16_t _len = 0;
+    uint16_t _len = 0;
     int16_t _x0, _x1, _y;
     int16_t _pos = 0;
-    uint8_t _scale = 1;
     bool _p = 0;
+    uint8_t _scale = 1;
+    bool _invert = 0, _tmode = 0;
 };
