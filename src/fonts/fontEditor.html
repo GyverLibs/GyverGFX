@@ -50,17 +50,16 @@
           if ((arr[x] >> y) & 1) btn.classList.add('active');
         }
       }
-      //0x14, 0x7f, 0x14, 0x7f, 0x14
     }
     function export_hex() {
       let str = '';
       for (let x = 0; x < 5; x++) {
         let byte = 0;
         for (let y = 0; y < 8; y++) {
-          if (EL(`row_${x}_${y}`).classList.contains('active')) {
-            byte |= (1 << 8);
-          }
           byte >>= 1;
+          if (EL(`row_${x}_${y}`).classList.contains('active')) {
+            byte |= (1 << 7);
+          }
         }
         str += '0x' + byte.toString(16);
         if (x != 4) str += ', ';
