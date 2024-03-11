@@ -205,7 +205,7 @@ void setup() {
   run1.setWindow(0, 16, 0);
   run1.start();
 
-  run1.setText_P(pstr_g); // глобальная PGM строка
+  run2.setText_P(pstr_g); // глобальная PGM строка
   run2.setSpeed(10);
   run2.setWindow(8, 16, 0);
   run2.start();
