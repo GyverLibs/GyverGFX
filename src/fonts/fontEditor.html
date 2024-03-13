@@ -14,13 +14,20 @@
     .btn {
       width: 20px;
       height: 20px;
+      margin: 2px;
       box-sizing: border-box;
-      border: 1px inset white;
+      border: 1px inset grey;
       background: black;
+      cursor: pointer;
     }
 
     .active {
       background: red;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
     }
   </style>
 </head>
@@ -41,6 +48,7 @@
     function EL(id) {
       return document.getElementById(id);
     }
+    
     function update() {
       let arr = EL('in').value.replace('{', '').replace('}', '').split(',').map(n => Number(n.trim()));
       for (let x = 0; x < 5; x++) {
@@ -51,8 +59,9 @@
         }
       }
     }
+
     function export_hex() {
-      let str = '';
+      let str = '{';
       for (let x = 0; x < 5; x++) {
         let byte = 0;
         for (let y = 0; y < 8; y++) {
@@ -61,9 +70,10 @@
             byte |= (1 << 7);
           }
         }
-        str += '0x' + byte.toString(16);
+        str += '0x' + byte.toString(16).padStart(2, '0').toUpperCase();
         if (x != 4) str += ', ';
       }
+      str += '}';
       EL('out').value = str;
     }
   </script>
