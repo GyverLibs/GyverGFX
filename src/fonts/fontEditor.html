@@ -2,40 +2,72 @@
 <html>
 
 <head>
+  <title>Font editor</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     .input {
       width: 200px;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      text-align: center;
     }
 
     .cont {
       display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
     }
 
     .btn {
-      width: 20px;
-      height: 20px;
-      margin: 2px;
+      width: 28px;
+      height: 28px;
+      margin: 4px;
       box-sizing: border-box;
-      border: 1px inset grey;
-      background: black;
+      border: none;
+      background: #888;
       cursor: pointer;
+      transition: background-color 0.3s;
+      border-radius: 4px;
     }
 
     .active {
-      background: red;
+      background: #f77;
     }
 
     .col {
       display: flex;
       flex-direction: column;
     }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 
 <body>
-  <input class="input" id="in" type="text" onchange="update();export_hex()"><br><br>
-  <div id="cont" class="cont"></div><br>
-  <input class="input" id="out" type="text"><br>
+  <div class="main-container">
+    <h1>Font editor</h1>
+    <input class="input" id="in" type="text" onchange="update();export_hex()" placeholder="Enter hex values"><br>
+    <div id="cont" class="cont"></div><br>
+    <input class="input" id="out" type="text" readonly placeholder="Result"><br>
+  </div>
 
   <script>
     for (let x = 0; x < 5; x++) {
@@ -48,7 +80,7 @@
     function EL(id) {
       return document.getElementById(id);
     }
-    
+
     function update() {
       let arr = EL('in').value.replace('{', '').replace('}', '').split(',').map(n => Number(n.trim()));
       for (let x = 0; x < 5; x++) {
@@ -65,9 +97,8 @@
       for (let x = 0; x < 5; x++) {
         let byte = 0;
         for (let y = 0; y < 8; y++) {
-          byte >>= 1;
           if (EL(`row_${x}_${y}`).classList.contains('active')) {
-            byte |= (1 << 7);
+            byte |= (1 << (7 - y));
           }
         }
         str += '0x' + byte.toString(16).padStart(2, '0').toUpperCase();
