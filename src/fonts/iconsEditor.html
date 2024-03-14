@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Icons editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .input {
+      width: 300px;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .cont {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      width: 28px;
+      height: 28px;
+      margin: 4px;
+      box-sizing: border-box;
+      border: none;
+      background: #888;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      border-radius: 4px;
+    }
+
+    .active {
+      background: #f77;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main-container">
+    <h1>Icons editor</h1>
+    <input class="input" id="in" type="text" onchange="update();export_hex()" placeholder="Enter hex values"><br>
+    <div id="cont" class="cont"></div><br>
+    <input class="input" id="out" type="text" readonly placeholder="Result"><br>
+  </div>
+
+  <script>
+    for (let x = 0; x < 8; x++) {
+      document.getElementById('cont').innerHTML += `<div class="col" id="col_${x}"></div>`;
+      for (let y = 0; y < 8; y++) {
+        document.getElementById(`col_${x}`).innerHTML += `<div class="btn" id="row_${x}_${y}" onclick="this.classList.toggle('active');export_hex()"></div>`;
+      }
+    }
+
+    function update() {
+      let arr = document.getElementById('in').value.replace('{', '').replace('}', '').split(',').map(n => Number(n.trim()));
+      for (let x = 0; x < 8; x++) {
+        for (let y = 0; y < 8; y++) {
+          let btn = document.getElementById(`row_${x}_${y}`);
+          btn.classList.remove('active');
+          if ((arr[x] >> y) & 1) btn.classList.add('active');
+        }
+      }
+    }
+
+    function export_hex() {
+      let str = '{';
+      for (let x = 0; x < 8; x++) {
+        let byte = 0;
+        for (let y = 0; y < 8; y++) {
+          if (document.getElementById(`row_${x}_${y}`).classList.contains('active')) {
+            byte |= (1 << (7 - y));
+          }
+        }
+        str += '0x' + byte.toString(16).padStart(2, '0').toUpperCase();
+        if (x != 7) str += ', ';
+      }
+      str += '}';
+      document.getElementById('out').value = str;
+    }
+  </script>
+</body>
+
+</html>
