@@ -251,14 +251,14 @@ class GyverGFX : public Print {
     }
 
     // битмап
-    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, uint8_t mode = GFX_REPLACE) {
+    void drawBitmap(int x, int y, const uint8_t *frame, int width, int height, uint8_t invert = 0, uint8_t mode = GFX_REPLACE, bool pgm = true) {
         uint8_t bytes = width >> 3;
         uint8_t left = width & 0b111;
         if (left) bytes++;
 
         for (int yy = 0; yy < height; yy++) {
             for (int xx = 0; xx < (width >> 3); xx++) {
-                uint8_t thisByte = pgm_read_word(&(frame[xx + yy * bytes])) ^ invert;
+                uint8_t thisByte = pgm ? (pgm_read_word(&(frame[xx + yy * bytes])) ^ invert) : (frame[xx + yy * bytes] ^ invert);
                 for (uint8_t k = 0; k < 8; k++) {
                     uint8_t val = thisByte & 0b10000000;
                     if (val || !mode) dotSecure((xx << 3) + k + x, yy + y, val);
@@ -266,7 +266,7 @@ class GyverGFX : public Print {
                 }
             }
             if (left) {
-                uint8_t thisByte = pgm_read_byte(&(frame[(width >> 3) + yy * bytes])) ^ invert;
+                uint8_t thisByte = pgm ? (pgm_read_byte(&(frame[(width >> 3) + yy * bytes])) ^ invert) : (frame[(width >> 3) + yy * bytes] ^ invert);
                 for (uint8_t k = 0; k < left; k++) {
                     uint8_t val = thisByte & 0b10000000;
                     if (val || !mode) dotSecure(((width >> 3) << 3) + k + x, yy + y, val);
@@ -487,7 +487,7 @@ class GyverGFX : public Print {
         }
     }
     void dotSecure(int x, int y, uint8_t fill = 1) {
-        if (x < 0 || x >= (int16_t)_w || y < 0 || y >= (int16_t)_h) return;
+        if (x < 0 || x >= (int)_w || y < 0 || y >= (int)_h) return;
         dot(x, y, fill);
     }
 #ifndef GFX_NO_PRINT
