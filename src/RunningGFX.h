@@ -80,6 +80,12 @@ class RunningGFX {
         if (!_tmr) _tmr = 1;
     }
 
+   // получить текущий статус
+    bool getStatus() {
+        if (_tmr) return true;
+       return false;  
+    }
+
     // тикер. Вернёт 0 в холостом, 1 при новом шаге, 2 при завершении движения
     // Можно передать false чтобы дисплей не обновлялся сам
     uint8_t tick(bool update = true) {
