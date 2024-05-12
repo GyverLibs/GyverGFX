@@ -93,7 +93,8 @@ class GyverGFX : public Print {
     }
 
     // обновить (интерфейсная)
-    virtual void update() = 0;
+    virtual void update() {
+    }
 
     // =================== GFX ===================
 
