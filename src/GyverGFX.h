@@ -65,11 +65,11 @@ class GyverGFX : public Print {
     }
 
     // получить ширину
-    uint16_t width() {
+    uint16_t width() const {
         return _w;
     }
     // получить высоту
-    uint16_t height() {
+    uint16_t height() const {
         return _h;
     }
 
