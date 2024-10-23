@@ -67,8 +67,8 @@ int height();               // получить высоту
 virtual void dot(int x, int y, uint8_t fill = 1);                   // точка
 void fill(uint8_t fill = 1);                                        // залить экран
 void clear();                                                       // очистить экран
-void lineH(int y, int x0, int x1, uint8_t fill = 1);                // вертикальная линия
-void lineV(int x, int y0, int y1, uint8_t fill = 1);                // горизонтальная линия
+void lineH(int y, int x0, int x1, uint8_t fill = 1);                // горизонтальная линия
+void lineV(int x, int y0, int y1, uint8_t fill = 1);                // вертикальная линия
 void line(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // линия
 void rect(int x0, int y0, int x1, int y1, uint8_t fill = 1);        // прямоугольник (координаты углов)
 void rectWH(int x0, int y0, int w, int h, uint8_t fill = 1);        // прямоугольник (координаты угла и размер)
